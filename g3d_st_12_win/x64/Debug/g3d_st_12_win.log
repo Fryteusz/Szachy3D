@@ -1,0 +1,5 @@
+﻿  main_file.cpp
+D:\Downloads\szachy\main_file.cpp(490,12): warning C4244: "argument": konwersja z "time_t" do "unsigned int", możliwa utrata danych
+D:\Downloads\szachy\main_file.cpp(525,25): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
+D:\Downloads\szachy\main_file.cpp(526,25): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
+  g3d_st_12_win.vcxproj -> D:\Downloads\szachy\x64\Debug\g3d_st_12_win.exe
