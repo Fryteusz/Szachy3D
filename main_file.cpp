@@ -18,23 +18,31 @@
 #include <time.h>
 
 int boardState[8][8] = {
-	{12, 13, 14, 15, 16, 14, 13, 12}, 
+	{12, 13, 14, 15, 16, 14, 13, 12},
 	{11, 11, 11, 11, 11, 11, 11, 11},
 	{ 0,  0,  0,  0,  0,  0,  0,  0},
 	{ 0,  0,  0,  0,  0,  0,  0,  0},
 	{ 0,  0,  0,  0,  0,  0,  0,  0},
 	{ 0,  0,  0,  0,  0,  0,  0,  0},
-	{ 1,  1,  1,  1,  1,  1,  1,  1}, 
-	{ 2,  3,  4,  5,  6,  4,  3,  2}  
+	{ 1,  1,  1,  1,  1,  1,  1,  1},
+	{ 2,  3,  4,  5,  6,  4,  3,  2}
 };
-float speed_x=0;
-float speed_y=0;
-float cameraAngleX = 0.0f;
-float cameraAngleY = PI / 4.0f; 
-float cameraDistance = 15.0f;
-float aspectRatio=1;
 
-ShaderProgram *sp;
+bool isAnimating = false;
+float animProgress = 0.0f;     
+float animSpeed = 2.0f;        
+int animFromX, animFromZ;      
+int animToX, animToZ;          
+int animatedPiece = 0;         
+float speed_x = 0;
+float speed_y = 0;
+float cameraAngleX = 0.0f;
+float cameraAngleY = PI / 4.0f;
+float cameraDistance = 15.0f;
+float aspectRatio = 1;
+
+
+ShaderProgram* sp;
 ChessModel pawnModel;
 ChessModel rookModel;
 ChessModel knightModel;
@@ -46,7 +54,7 @@ struct Move {
 	int toX, toZ;
 };
 
-int moveCount = 0;       
+int moveCount = 0;
 bool isWhiteTurn = true;
 bool isPathClear(int fromX, int fromZ, int toX, int toZ) {
 	int stepX = 0;
@@ -62,7 +70,7 @@ bool isPathClear(int fromX, int fromZ, int toX, int toZ) {
 
 	while (currentX != toX || currentZ != toZ) {
 		if (boardState[currentX][currentZ] != 0) {
-			return false; 
+			return false;
 		}
 		currentX += stepX;
 		currentZ += stepZ;
@@ -86,17 +94,17 @@ bool isMoveLegal(int fromX, int fromZ, int toX, int toZ) {
 
 	switch (type) {
 	case 1: //PIONEK
-		if (piece < 10) { 
+		if (piece < 10) {
 			if (dx == -1 && dz == 0 && target == 0) return true;
 			if (fromX == 6 && dx == -2 && dz == 0 && target == 0 && boardState[fromX - 1][fromZ] == 0) return true;
 			if (dx == -1 && abs(dz) == 1 && target != 0) return true;
 		}
-		else { 
+		else {
 			if (dx == 1 && dz == 0 && target == 0) return true;
 			if (fromX == 1 && dx == 2 && dz == 0 && target == 0 && boardState[fromX + 1][fromZ] == 0) return true;
 			if (dx == 1 && abs(dz) == 1 && target != 0) return true;
 		}
-		return false; 
+		return false;
 	case 2: //WIEŻA
 		if ((dx == 0 && dz != 0) || (dx != 0 && dz == 0)) {
 			return isPathClear(fromX, fromZ, toX, toZ);
@@ -129,7 +137,7 @@ bool isMoveLegal(int fromX, int fromZ, int toX, int toZ) {
 
 float tileVertices[] = {
 	0.0f, 0.0f, 0.0f, 1.0f,   1.0f, 0.0f, 0.0f, 1.0f,   1.0f, 0.0f, 1.0f, 1.0f,
-	0.0f, 0.0f, 0.0f, 1.0f,   1.0f, 0.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f, 1.0f 
+	0.0f, 0.0f, 0.0f, 1.0f,   1.0f, 0.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f, 1.0f
 };
 
 float tileNormals[] = {
@@ -197,10 +205,18 @@ void makeRandomMove() {
 		int randomIndex = rand() % legalMoves.size();
 		Move chosenMove = legalMoves[randomIndex];
 
-		boardState[chosenMove.toX][chosenMove.toZ] = boardState[chosenMove.fromX][chosenMove.fromZ];
+		animatedPiece = boardState[chosenMove.fromX][chosenMove.fromZ];
+		animFromX = chosenMove.fromX;
+		animFromZ = chosenMove.fromZ;
+		animToX = chosenMove.toX;
+		animToZ = chosenMove.toZ;
+		animProgress = 0.0f; 
+		isAnimating = true;  
+
+		boardState[chosenMove.toX][chosenMove.toZ] = animatedPiece;
 		boardState[chosenMove.fromX][chosenMove.fromZ] = 0;
 
-		printf("Ruch %d: z (%d,%d) na (%d,%d)\n", moveCount + 1, chosenMove.fromX, chosenMove.fromZ, chosenMove.toX, chosenMove.toZ);
+		printf("Ruch %d: z (%d,%d) na (%d,%d)\n", moveCount + 1, animFromX, animFromZ, animToX, animToZ);
 
 		isWhiteTurn = !isWhiteTurn;
 		moveCount++;
@@ -226,7 +242,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		}
 		if (key == GLFW_KEY_DOWN) {
 			cameraAngleY -= 0.1f;
-			if (cameraAngleY < 0.1f) cameraAngleY = 0.1f; 
+			if (cameraAngleY < 0.1f) cameraAngleY = 0.1f;
 		}
 
 		if (key == GLFW_KEY_W) cameraDistance -= 0.5f;
@@ -237,39 +253,39 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	}
 }
 
-void windowResizeCallback(GLFWwindow* window,int width,int height) {
-    if (height==0) return;
-    aspectRatio=(float)width/(float)height;
-    glViewport(0,0,width,height);
+void windowResizeCallback(GLFWwindow* window, int width, int height) {
+	if (height == 0) return;
+	aspectRatio = (float)width / (float)height;
+	glViewport(0, 0, width, height);
 }
 
 
 GLuint readTexture(const char* filename) {
-    GLuint tex;
-    glActiveTexture(GL_TEXTURE0);
+	GLuint tex;
+	glActiveTexture(GL_TEXTURE0);
 
-    std::vector<unsigned char> image;   
-    unsigned width, height;   
-    unsigned error = lodepng::decode(image, width, height, filename);
+	std::vector<unsigned char> image;
+	unsigned width, height;
+	unsigned error = lodepng::decode(image, width, height, filename);
 
-    glGenTextures(1, &tex); 
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0,
-        GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char*)image.data());
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0,
+		GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char*)image.data());
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    return tex;
+	return tex;
 }
 
 
 //Procedura inicjująca
 void initOpenGLProgram(GLFWwindow* window) {
-	glClearColor(0,0,0,1);
+	glClearColor(0, 0, 0, 1);
 	glEnable(GL_DEPTH_TEST);
-	glfwSetWindowSizeCallback(window,windowResizeCallback);
-	glfwSetKeyCallback(window,keyCallback);
+	glfwSetWindowSizeCallback(window, windowResizeCallback);
+	glfwSetKeyCallback(window, keyCallback);
 	sp = new ShaderProgram("v_simplest.glsl", NULL, "f_simplest.glsl");
 	pawnModel = loadModel("model/Pawn.obj", "model/");
 	rookModel = loadModel("model/Rook.obj", "model/");
@@ -278,7 +294,7 @@ void initOpenGLProgram(GLFWwindow* window) {
 	queenModel = loadModel("model/Queen.obj", "model/");
 	kingModel = loadModel("model/King.obj", "model/");
 
-	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
+	sp = new ShaderProgram("v_simplest.glsl", NULL, "f_simplest.glsl");
 	tex0 = readTexture("metal_diffuse.png");
 	tex1 = readTexture("metal_specular.png");
 	unsigned char lightPixel[] = { 230, 230, 204, 255 };
@@ -294,15 +310,15 @@ void initOpenGLProgram(GLFWwindow* window) {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, darkPixel);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	
+
 }
 
 
 
-//Zwolnienie zasobów zajętych przez program
+
 void freeOpenGLProgram(GLFWwindow* window) {
 
-    delete sp;
+	delete sp;
 }
 
 
@@ -365,10 +381,14 @@ void drawScene(GLFWwindow* window, float angle_x, float angle_y) {
 		for (int z = 0; z < 8; z++) {
 			int piece = boardState[x][z];
 
+			if (isAnimating && x == animToX && z == animToZ) {
+				continue; 
+			}
+
 			if (piece != 0) {
 
 				ChessModel* currentModel = NULL;
-				int type = piece % 10; 
+				int type = piece % 10;
 
 				switch (type) {
 				case 1: currentModel = &pawnModel; break;
@@ -410,7 +430,45 @@ void drawScene(GLFWwindow* window, float angle_x, float angle_y) {
 	glDisableVertexAttribArray(sp->a("normal"));
 	glDisableVertexAttribArray(sp->a("texCoord0"));
 	glDisableVertexAttribArray(sp->a("color"));
+	if (isAnimating) {
+		glEnableVertexAttribArray(sp->a("vertex"));
+		glEnableVertexAttribArray(sp->a("normal"));
+		glEnableVertexAttribArray(sp->a("texCoord0"));
 
+		// 1. Ustalenie modelu i koloru
+		ChessModel* animModel = NULL;
+		int type = animatedPiece % 10;
+		switch (type) {
+		case 1: animModel = &pawnModel; break;
+		case 2: animModel = &rookModel; break;
+		case 3: animModel = &knightModel; break;
+		case 4: animModel = &bishopModel; break;
+		case 5: animModel = &queenModel; break;
+		case 6: animModel = &kingModel; break;
+		}
+
+		if (animatedPiece < 10) glBindTexture(GL_TEXTURE_2D, tex0);
+		else glBindTexture(GL_TEXTURE_2D, texDark);
+
+		glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, animModel->vertices.data());
+		glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT, false, 0, animModel->normals.data());
+		glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, animModel->texCoords.data());
+
+		float currentX = glm::mix((float)animFromX, (float)animToX, animProgress);
+		float currentZ = glm::mix((float)animFromZ, (float)animToZ, animProgress);
+
+		glm::mat4 M_anim = glm::mat4(1.0f);
+		M_anim = glm::translate(M_anim, glm::vec3(-4.0f + currentX + 0.5f, -2.0f, -4.0f + currentZ + 0.5f));
+		M_anim = glm::rotate(M_anim, -PI / 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		M_anim = glm::scale(M_anim, glm::vec3(0.01f, 0.01f, 0.01f));
+
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(M_anim));
+		glDrawArrays(GL_TRIANGLES, 0, animModel->vertexCount);
+
+		glDisableVertexAttribArray(sp->a("vertex"));
+		glDisableVertexAttribArray(sp->a("normal"));
+		glDisableVertexAttribArray(sp->a("texCoord0"));
+	}
 	glfwSwapBuffers(window);
 }
 
@@ -422,45 +480,65 @@ int main(void)
 
 	glfwSetErrorCallback(error_callback);
 
-	if (!glfwInit()) { 
+	if (!glfwInit()) {
 		fprintf(stderr, "Nie można zainicjować GLFW.\n");
 		exit(EXIT_FAILURE);
 	}
 
-	window = glfwCreateWindow(500, 500, "OpenGL", NULL, NULL);  
+	window = glfwCreateWindow(500, 500, "OpenGL", NULL, NULL);
 
-	if (!window) 
+	if (!window)
 	{
 		fprintf(stderr, "Nie można utworzyć okna.\n");
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
 
-	glfwMakeContextCurrent(window); 
-	glfwSwapInterval(1); 
+	glfwMakeContextCurrent(window);
+	glfwSwapInterval(1);
 
-	if (glewInit() != GLEW_OK) { 
+	if (glewInit() != GLEW_OK) {
 		fprintf(stderr, "Nie można zainicjować GLEW.\n");
 		exit(EXIT_FAILURE);
 	}
 
-	initOpenGLProgram(window); 
+	initOpenGLProgram(window);
 
-	float angle_x=0; 
-	float angle_y=0; 
-	glfwSetTime(0); 
-	while (!glfwWindowShouldClose(window)) 
+	float angle_x = 0;
+	float angle_y = 0;
+	glfwSetTime(0);
+	while (!glfwWindowShouldClose(window))
 	{
-        angle_x+=speed_x*glfwGetTime();
-        angle_y+=speed_y*glfwGetTime();
-        glfwSetTime(0); 
-		drawScene(window,angle_x,angle_y); 
-		glfwPollEvents(); 
+		angle_x += speed_x * glfwGetTime();
+		angle_y += speed_y * glfwGetTime();
+		glfwSetTime(0);
+		drawScene(window, angle_x, angle_y);
+		glfwPollEvents();
+		//Główna pętla
+		glfwSetTime(0); //Zeruj timer
+		while (!glfwWindowShouldClose(window))
+		{
+			float deltaTime = glfwGetTime(); 
+			glfwSetTime(0);
+
+			angle_x += speed_x * deltaTime;
+			angle_y += speed_y * deltaTime;
+
+			if (isAnimating) {
+				animProgress += animSpeed * deltaTime;
+				if (animProgress >= 1.0f) {
+					animProgress = 1.0f;
+					isAnimating = false;
+			}
+
+			drawScene(window, angle_x, angle_y);
+			glfwPollEvents();
+		}
 	}
 
 	freeOpenGLProgram(window);
 
-	glfwDestroyWindow(window); 
-	glfwTerminate(); 
+	glfwDestroyWindow(window);
+	glfwTerminate();
 	exit(EXIT_SUCCESS);
 }
