@@ -1,22 +1,4 @@
-﻿  lodepng.cpp
-D:\Downloads\szachy\Szachy3D\lodepng.cpp(762,10): warning C4334: "<<": wynik 32-bitowe przesunięcia niejawnie skonwertowano do 64 bitów (czy 64-bitowe przesunięcie było zamierzone?)
-D:\Downloads\szachy\Szachy3D\lodepng.cpp(1422,25): warning C4267: "=": konwersja z "size_t" do "int", możliwa utrata danych
-D:\Downloads\szachy\Szachy3D\lodepng.cpp(1426,27): warning C4267: "=": konwersja z "size_t" do "int", możliwa utrata danych
-D:\Downloads\szachy\Szachy3D\lodepng.cpp(1498,40): warning C4267: "=": konwersja z "size_t" do "unsigned int", możliwa utrata danych
-D:\Downloads\szachy\Szachy3D\lodepng.cpp(3441,25): warning C4334: "<<": wynik 32-bitowe przesunięcia niejawnie skonwertowano do 64 bitów (czy 64-bitowe przesunięcie było zamierzone?)
-D:\Downloads\szachy\Szachy3D\lodepng.cpp(3455,53): warning C4267: "argument": konwersja z "size_t" do "unsigned int", możliwa utrata danych
-D:\Downloads\szachy\Szachy3D\lodepng.cpp(4262,42): warning C4267: "=": konwersja z "size_t" do "unsigned int", możliwa utrata danych
-D:\Downloads\szachy\Szachy3D\lodepng.cpp(4310,26): warning C4267: "=": konwersja z "size_t" do "unsigned int", możliwa utrata danych
-D:\Downloads\szachy\Szachy3D\lodepng.cpp(4390,34): warning C4267: "=": konwersja z "size_t" do "unsigned int", możliwa utrata danych
-D:\Downloads\szachy\Szachy3D\lodepng.cpp(5329,27): warning C4267: "inicjowanie": konwersja z "size_t" do "unsigned int", możliwa utrata danych
-  main_file.cpp
-D:\Downloads\szachy\Szachy3D\main_file.cpp(484,12): warning C4244: "argument": konwersja z "time_t" do "unsigned int", możliwa utrata danych
-D:\Downloads\szachy\Szachy3D\main_file.cpp(518,22): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
-D:\Downloads\szachy\Szachy3D\main_file.cpp(519,22): warning C4244: "+=": konwersja z "double" do "float", możliwa utrata danych
-D:\Downloads\szachy\Szachy3D\main_file.cpp(527,20): warning C4244: "inicjowanie": konwersja z "double" do "float", możliwa utrata danych
-  Mloader.cpp
-  shaderprogram.cpp
-D:\Downloads\szachy\Szachy3D\shaderprogram.cpp(38,15): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
-  Generowanie kodu...
-glew32s.lib(glew.obj) : warning LNK4099: nie znaleziono pliku PDB „glew32s.pdb” z elementem „glew32s.lib(glew.obj)” lub w pozycji „D:\Downloads\szachy\Szachy3D\x64\Debug\glew32s.pdb”; obiekt zostanie skonsolidowany bez informacji debugowania
-  g3d_st_12_win.vcxproj -> D:\Downloads\szachy\Szachy3D\x64\Debug\g3d_st_12_win.exe
+﻿  main_file.cpp
+C:\Users\belez\Documents\GitHub\Szachy3D\main_file.cpp(816,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+C:\Users\belez\Documents\GitHub\Szachy3D\main_file.cpp(851,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  g3d_st_12_win.vcxproj -> C:\Users\belez\Documents\GitHub\Szachy3D\x64\Debug\g3d_st_12_win.exe

@@ -41,7 +41,7 @@ int boardState[8][8] = {
 	{ 0,  0,  0,  0,  0,  0,  0,  0},
 	{ 0,  0,  0,  0,  0,  0,  0,  0},
 	{ 0,  0,  0,  0,  0,  0,  0,  0},
-	{ 1,  1,  1,  1,  1,  1,  1,  1},
+	{1,  1,  1, 1,  1,  1,  1,  1},
 	{ 2,  3,  4,  5,  6,  4,  3,  2}
 };
 
@@ -327,6 +327,7 @@ void loadPGN(const char* filename) {
 			found = true;
 		}
 		else {
+
 			int type = 1;
 			char pieceChar = token[0];
 
@@ -375,10 +376,11 @@ void loadPGN(const char* filename) {
 		}
 
 		if (found) {
+			std::string originalToken = token;
 			loadedMoves.push_back(m);
-			if (token == "O-O" || token == "O-O-O") {
+			if (originalToken == "O-O" || originalToken == "O-O-O") {  // użyj oryginału
 				int r = isWhiteTurn ? 7 : 0;
-				if (token == "O-O") {
+				if (originalToken == "O-O") {
 					boardState[r][6] = boardState[r][4]; boardState[r][4] = 0;
 					boardState[r][5] = boardState[r][7]; boardState[r][7] = 0;
 				}
@@ -634,19 +636,18 @@ void initOpenGLProgram(GLFWwindow* window) {
 	kingModel = loadModel("model/King.obj", "model/");
 
 	sp = new ShaderProgram("v_simplest.glsl", NULL, "f_simplest.glsl");
-	tex0 = readTexture("metal_diffuse.png");
-	tex1 = readTexture("metal_specular.png");
+	
 
 	unsigned char lightPixel[] = { 230, 230, 204, 255 };
-	glGenTextures(1, &texLight);
-	glBindTexture(GL_TEXTURE_2D, texLight);
+	glGenTextures(1, &texDark);
+	glBindTexture(GL_TEXTURE_2D, texDark);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, lightPixel);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	unsigned char darkPixel[] = { 102, 76, 51, 255 };
-	glGenTextures(1, &texDark);
-	glBindTexture(GL_TEXTURE_2D, texDark);
+	glGenTextures(1, &texLight);
+	glBindTexture(GL_TEXTURE_2D, texLight);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, darkPixel);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -743,8 +744,8 @@ void drawScene(GLFWwindow* window, float angle_x, float angle_y) {
 				}
 
 				if (currentModel != NULL) {
-					if (piece < 10) glBindTexture(GL_TEXTURE_2D, tex0);
-					else glBindTexture(GL_TEXTURE_2D, texDark);
+					if (piece < 10) glBindTexture(GL_TEXTURE_2D, texDark);
+					else glBindTexture(GL_TEXTURE_2D, texLight);
 
 					glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, currentModel->vertices.data());
 					glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT, false, 0, currentModel->normals.data());
@@ -775,8 +776,8 @@ void drawScene(GLFWwindow* window, float angle_x, float angle_y) {
 		}
 
 		if (animModel != NULL) {
-			if (animatedPiece < 10) glBindTexture(GL_TEXTURE_2D, tex0);
-			else glBindTexture(GL_TEXTURE_2D, texDark);
+			if (animatedPiece < 10) glBindTexture(GL_TEXTURE_2D, texDark);
+			else glBindTexture(GL_TEXTURE_2D, texLight);
 
 			glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, animModel->vertices.data());
 			glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT, false, 0, animModel->normals.data());
